@@ -3,8 +3,8 @@ from extensions import db, login_manager
 from models.user import User
 
 app = Flask(__name__)
+app.config.from_pyfile('config.py')
 app.config['SECRET_KEY'] = 'secretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookstore.db'
 
 db.init_app(app)
 login_manager.init_app(app)
