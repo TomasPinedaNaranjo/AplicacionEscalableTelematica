@@ -10,7 +10,7 @@ services:
       - DB_PORT=3306
       - DB_NAME=bookstoredb
       - DB_USER=admin
-      - DB_PASSWORD=bookstoreDB
+      - DB_PASSWORD=bookstoredb
     ports:
       - "5000:5000"
     networks:
