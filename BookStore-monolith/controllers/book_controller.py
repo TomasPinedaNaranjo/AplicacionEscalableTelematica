@@ -1,28 +1,33 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from models.book import Book
-
+import socket
 from extensions import db
-#from app import db
+# from app import db
 from flask_login import login_required, current_user
 
 book = Blueprint('book', __name__)
 
-#@book.route('/')
-#@login_required
-#def home():
+# @book.route('/')
+# @login_required
+# def home():
 #    return render_template('home.html')
 
-#@book.route('/')
+# @book.route('/')
+
+
 @book.route('/catalog')
 def catalog():
+    print(socket.gethostname())
     books = Book.query.all()
     return render_template('catalog.html', books=books)
+
 
 @book.route('/my_books')
 @login_required
 def my_books():
     books = Book.query.filter_by(seller_id=current_user.id).all()
     return render_template('my_books.html', books=books)
+
 
 @book.route('/add_book', methods=['GET', 'POST'])
 @login_required
@@ -33,11 +38,13 @@ def add_book():
         description = request.form.get('description')
         price = float(request.form.get('price'))
         stock = int(request.form.get('stock'))
-        new_book = Book(title=title, author=author, description=description, price=price, stock=stock, seller_id=current_user.id)
+        new_book = Book(title=title, author=author, description=description,
+                        price=price, stock=stock, seller_id=current_user.id)
         db.session.add(new_book)
         db.session.commit()
         return redirect(url_for('book.catalog'))
     return render_template('add_book.html')
+
 
 @book.route('/edit_book/<int:book_id>', methods=['GET', 'POST'])
 @login_required
@@ -56,6 +63,7 @@ def edit_book(book_id):
         return redirect(url_for('book.catalog'))
 
     return render_template('edit_book.html', book=book_to_edit)
+
 
 @book.route('/delete_book/<int:book_id>', methods=['POST'])
 @login_required
