@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from models.book import Book
-import socket
+
 from extensions import db
 #from app import db
 from flask_login import login_required, current_user
@@ -15,7 +15,6 @@ book = Blueprint('book', __name__)
 #@book.route('/')
 @book.route('/catalog')
 def catalog():
-    print(socket.gethostname())
     books = Book.query.all()
     return render_template('catalog.html', books=books)
 
