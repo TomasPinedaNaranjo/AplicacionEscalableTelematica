@@ -2,8 +2,11 @@ version: '3.8'
 
 services:
   flaskapp:
-    build: .
-    restart: always
+    image: estebanmr30/bookstoreobjetive3:latest
+    deploy:
+      replicas: 10
+      restart_policy:
+        condition: on-failure
     environment:
       FLASK_ENV: ${FLASK_ENV}
       DB_HOST: ${DB_HOST}
@@ -12,9 +15,10 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5000:5000"
+      - '5000:5000'
     networks:
       - bookstore_net
 
 networks:
   bookstore_net:
+    driver: overlay
