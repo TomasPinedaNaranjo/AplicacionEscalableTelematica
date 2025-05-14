@@ -461,32 +461,15 @@ Docker swarm se encargará de redistribuir las réplicas en caso de que alguna m
 ## opcional - detalles de la organización del código por carpetas o descripción de algún archivo. (ESTRUCTURA DE DIRECTORIOS Y ARCHIVOS IMPORTANTE DEL PROYECTO, comando 'tree' de linux)
 
 ##
-
-## opcionalmente - si quiere mostrar resultados o pantallazos
-
-# 4. Descripción del ambiente de EJECUCIÓN (en producción) lenguaje de programación, librerias, paquetes, etc, con sus numeros de versiones.
-
 # IP o nombres de dominio en nube o en la máquina servidor.
 
 # Dominio: elsapofeliz.website
 
-## descripción y como se configura los parámetros del proyecto (ej: ip, puertos, conexión a bases de datos, variables de ambiente, parámetros, etc)
-
-## como se lanza el servidor.
-
-## una mini guia de como un usuario utilizaría el software o la aplicación
-
-## opcionalmente - si quiere mostrar resultados o pantallazos
-
-# 5. otra información que considere relevante para esta actividad.
-
-# referencias:
-
-<debemos siempre reconocer los créditos de partes del código que reutilizaremos, así como referencias a youtube, o referencias bibliográficas utilizadas para desarrollar el proyecto o la actividad>
-
 ## sitio1-url
 
 ## sitio2-url
+
+# referencias:
 
 ## url de donde tomo info para desarrollar este proyecto
 
