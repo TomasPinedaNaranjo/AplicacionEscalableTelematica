@@ -65,6 +65,118 @@ Objetivo 3:
 ## detalles técnicos
 
 ## descripción y como se configura los parámetros del proyecto (ej: ip, puertos, conexión a bases de datos, variables de ambiente, parámetros, etc)
+# Para el objetivo 1: 
+
+# Paso 1: Crear la Instancia EC2
+Seleccionar Amazon Linux 2023: Elegimos Amazon Linux 2023 como sistema operativo para la instancia EC2.
+
+Permitir tráfico HTTP/HTTPS: Configuramos las reglas de seguridad para permitir el tráfico a través de los puertos HTTP (80) y HTTPS (443), esenciales para la comunicación web.
+
+Asignar IP Elástica: Se asignó una dirección IP estática elástica a la instancia para que sea accesible de forma permanente a través de internet.
+
+IP de la instancia: 13.217.234.178
+Configurar DNS con Route 53: Asignamos la IP elástica a la configuración de la zona de Route 53, lo que nos permite usar un dominio personalizado para acceder al servidor, por ejemplo, elsapofeliz.website.
+
+# Paso 2: Instalar Docker y GitHub
+
+Nota: Desplegar aplicaciones en Docker es crucial especialmente para sistemas escalables, ya que permite encapsular servicios en contenedores ligeros, portables y consistentes. Esto facilita la implementación en diferentes entornos sin conflictos de dependencias, optimiza el uso de recursos y mejora la escalabilidad horizontal al permitir replicar servicios rápidamente. Además, Docker simplifica la automatización del despliegue, mantenimiento y monitoreo, lo cual es vital en aplicaciones telemáticas que requieren alta disponibilidad, baja latencia y facilidad para adaptarse a demandas variables.
+Instalar Docker:
+ Se creó un archivo de script docker.sh para automatizar la instalación de Docker en la instancia. Esto incluye la adición de la clave GPG oficial de Docker, el repositorio, y la instalación de los paquetes necesarios.
+Ingresamos con: nano docker.sh
+
+El archivo docker.sh contiene los siguientes comandos:
+
+Poner dentro de un archivo:
+
+
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+
+Ejecutar el script para instalar Docker y Docker Compose:
+
+chmod +x docker.sh
+./docker.sh
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-compose
+
+Para no tener que usar sudo siempre con docker hacemos: 
+
+sudo usermod -aG docker $USER
+newgrp docker
+
+Configuramos Docker para que inicie automáticamente al arrancar el sistema:
+sudo systemctl enable docker.service
+sudo systemctl enable containerd.service
+
+Instalamos git: 
+
+sudo apt install -y git
+git clone repository
+docker-compose up --build -d
+docker ps
+
+Ya deberia de poder acceder http://<TU_IP_ELÁSTICA>:5000
+NOTA:  puerto 5000 esté abierto en el security group de tu instancia EC2.
+
+# Paso 3: Implementar Nginx como proxy inverso
+
+Nota: Un proxy inverso como Nginx es fundamental en aplicaciones escalables porque actúa como intermediario entre los clientes y los servidores, distribuyendo el tráfico de manera eficiente y segura. Su uso permite balancear la carga entre múltiples instancias de una aplicación, optimizar el rendimiento mediante caché, manejar certificados SSL/TLS para conexiones seguras y redirigir peticiones de forma inteligente. Esto no solo mejora la disponibilidad y la velocidad de respuesta, sino que también proporciona una capa adicional de seguridad y control, aspectos clave en entornos donde la estabilidad y la eficiencia del sistema son esenciales. 
+
+Instalar Nginx:
+Se instaló Nginx para actuar como proxy inverso, redirigiendo las solicitudes del usuario a la aplicación en ejecución en el puerto 5000. Los comandos para instalar Nginx son:
+sudo apt install nginx -y
+sudo service nginx status
+
+Configurar el archivo de Nginx:
+Se creó un archivo de configuración para Nginx en /etc/nginx/sites-available/elsapofeliz.website con el siguiente contenido:
+
+nano /etc/nginx/sites-available/elsapofeliz.website
+
+Contiene: 
+
+server {
+        listen 80;
+        server_name elsapofeliz.website;
+
+        location / {
+                proxy_pass http://localhoost:5000;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+        }
+}
+
+Habilitar el sitio:
+Se habilita el archivo de configuración creando un enlace simbólico en el directorio sites-enabled:
+sudo ln -s /etc/nginx/sites-available/elsapofeliz.website /etc/nginx/sites-enabled/
+
+sudo nginx -t
+
+sudo systemctl restart nginx
+
+# Paso 4: Instalar certificado SSL 
+
+Nota: Implementar SSL (Secure Sockets Layer) es esencial en aplicaciones porque garantiza la confidencialidad e integridad de los datos transmitidos entre los clientes y el servidor. Al cifrar la comunicación, SSL protege la información sensible como credenciales o datos personales contra ataques de intermediarios o interceptaciones maliciosas. En entornos escalables, donde múltiples servicios pueden comunicarse a través de redes públicas o privadas, contar con certificados SSL también refuerza la confianza del usuario y cumple con estándares de seguridad modernos, siendo especialmente relevante cuando se manejan datos en tiempo real o comunicaciones críticas.
+
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx -d elsapofeliz.website
+sudo systemctl restart nginx
+
+
+Este certificado expira para ello verificamos renovación automática:
+
+ sudo systemctl status certbot.timer
 
 ## opcional - detalles de la organización del código por carpetas o descripción de algún archivo. (ESTRUCTURA DE DIRECTORIOS Y ARCHIVOS IMPORTANTE DEL PROYECTO, comando 'tree' de linux)
 
@@ -75,6 +187,8 @@ Objetivo 3:
 # 4. Descripción del ambiente de EJECUCIÓN (en producción) lenguaje de programación, librerias, paquetes, etc, con sus numeros de versiones.
 
 # IP o nombres de dominio en nube o en la máquina servidor.
+
+Dominio: elsapofeliz.website
 
 ## descripción y como se configura los parámetros del proyecto (ej: ip, puertos, conexión a bases de datos, variables de ambiente, parámetros, etc)
 
@@ -95,3 +209,8 @@ Objetivo 3:
 ## sitio2-url
 
 ## url de donde tomo info para desarrollar este proyecto
+
+https://www.youtube.com/watch?v=bEI8ScZWYjE&list=LL&index=1&t=571s
+
+https://wordspiner.xyz/how-to-install-docker-on-kali-linux-with-a-few-simple-steps/
+
