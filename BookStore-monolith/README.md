@@ -48,6 +48,9 @@ Objetivo 3: Para el tercer objetivo teníamos como propósito utilizar Docker Sw
 # 2. información general de diseño de alto nivel, arquitectura, patrones, mejores prácticas utilizadas.
 Objetivo 1:
 
+![Captura de pantalla (124)](https://github.com/user-attachments/assets/e261bd4b-e3e7-435d-8e0c-9f1040e88aba)
+
+
 Objetivo 2:
 
 <img width="877" alt="Captura de pantalla 2025-05-13 a la(s) 7 37 50 p m" src="https://github.com/user-attachments/assets/b38a8b02-618d-4391-adc6-067ec300262f" />
@@ -58,13 +61,7 @@ Objetivo 3:
 
 # 3. Descripción del ambiente de desarrollo y técnico: lenguaje de programación, librerias, paquetes, etc, con sus numeros de versiones.
 
-## como se compila y ejecuta.
-
-## detalles del desarrollo.
-
-## detalles técnicos
-
-## descripción y como se configura los parámetros del proyecto (ej: ip, puertos, conexión a bases de datos, variables de ambiente, parámetros, etc)
+## A continuación se muestra como se compila, ejecuta, detalles del desarrollo, detalles técnicos y descripción y como se configura los parámetros del proyecto (ej: ip, puertos, conexión a bases de datos, variables de ambiente, parámetros, etc)
 # Para el objetivo 1: 
 
 # Paso 1: Crear la Instancia EC2
@@ -188,7 +185,7 @@ Este certificado expira para ello verificamos renovación automática:
 
 # IP o nombres de dominio en nube o en la máquina servidor.
 
-Dominio: elsapofeliz.website
+# Dominio: elsapofeliz.website
 
 ## descripción y como se configura los parámetros del proyecto (ej: ip, puertos, conexión a bases de datos, variables de ambiente, parámetros, etc)
 
