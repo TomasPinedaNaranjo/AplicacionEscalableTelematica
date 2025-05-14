@@ -213,6 +213,219 @@ Este certificado expira para ello verificamos renovación automática:
 
  sudo systemctl status certbot.timer
 
+
+# Paso 5: Verificar el funcionamiento de todo el sistema:
+
+Docker:
+![Captura de pantalla (150)](https://github.com/user-attachments/assets/247ea984-fb84-42da-bc35-5cd5846b9fa4)
+
+Nginx:
+![Captura de pantalla (151)](https://github.com/user-attachments/assets/a7686899-bc19-4336-a83c-694e6ad13a42)
+
+SSL:
+![Captura de pantalla (152)](https://github.com/user-attachments/assets/5c5a2735-ae7c-483a-9756-315ce2d9dae1)
+
+# Desarrollo del objetivo 2
+Tenemos como objetivo el despliegue de una app monolítica en un entorno escalable en AWS. Para esto partimos de las siguientes consideraciones de elementos necesarios para el desarrollo de este objetivo:
+
+Múltiples VMs (EC2) con Auto Scaling Group.
+Un Load Balancer (ELB).
+Base de datos administrada (RDS) o replicada con HA.
+Un sistema de archivos NFS compartido (por ejemplo, EFS en AWS o tu propio NFS en una VM con HA).
+El dominio y SSL del objetivo 1 deben seguir funcionando.
+
+Para esto, el objetivo es ejecutar 2 o más VMs con la app y Docker-Compose. Además, la creación de un Auto Scaling Group para que las instancias se creen o se eliminen automáticamente. Necesitaremos un Load Balancer encargado de distribuir el tráfico, una base de datos Amazon RDS con MySQL. Además, aunque no existen archivos en la aplicación, la implementación de un sistema de archivos compartido NFS.
+
+Se definieron el siguiente conjunto de pasos para cumplir con dicho objetivo.
+Crear una imagen AMI de la instancia del objetivo 1
+Configurar RDS (MySQL)
+Montar EFS
+Configurar el Auto Scaling Group
+Crear el ALB
+
+Decidimos utilizar el patrón de arquitectura de escalamiento de app monolítica Escalamiento horizontal con ALB + Auto Scaling + almacenamiento externo. A continuación se describe cada uno de los componentes claves del patrón:
+
+Balanceador de carga (ALB)
+
+Distribuye tráfico entrante a múltiples instancias.
+Soporta SSL y redirección automática.
+
+Auto Scaling Group
+
+Crea más instancias EC2 cuando sube la carga (escalamiento horizontal).
+Elimina instancias cuando baja la carga (optimización de costo).
+Usa una AMI con Docker + App ya instalada.
+
+Base de datos externa (Amazon RDS)
+
+Las instancias NO deben tener su propia DB local.
+Todas comparten una sola base de datos escalable y confiable.
+
+Sistema de archivos compartido (Amazon EFS)
+
+Si la app guarda archivos (por ejemplo, imágenes subidas por usuarios), debe usar un almacenamiento común.
+Todas las instancias montan el mismo volumen EFS.
+
+# 1. Creación de base de datos RDS
+Vamos a RDS y seleccionamos crear base de datos MySQL, entre las configuraciones seleccionamos el VPC default, además del free tier y la versión MySQL 8.0.40. Es importante seleccionar un nombre de administrador y contraseña segura para conectarse a la DB desde las instancias.
+![Captura de pantalla (126)](https://github.com/user-attachments/assets/3fde1c9b-a8f4-45b9-b7f5-3e52932c8de9)
+
+Como siguiente paso para conectar la base de datos creada a las instancias corriendo nuestra aplicación flask, debemos modificar el archivo docker compose por el cual se crea y corre nuestra app. El archivo por defecto está configurado para levantar dos contenedores, uno para la aplicación y otro para la base de datos. Ahora la nueva versión de este docker compose solo levanta un contenedor para la aplicación y se conecta a la base de datos externa. El DB_HOST en este caso es el endpoint que obtenemos de la base de datos RDS.
+![Captura de pantalla (127)](https://github.com/user-attachments/assets/2bbc1dd3-08fe-43e4-a622-8f71bf1bf63f)
+
+Como se puede observar, los datos sensibles para la conexión a la base de datos se obtienen de un archivo .env creado con el objetivo de proteger dicha información.
+
+El archivo config.py tambien sufre cambios necesarios para la conexión a la base de datos:
+
+![Captura de pantalla (128)](https://github.com/user-attachments/assets/182c13c7-0d63-4015-b2a4-f9b912aebe94)
+En el archivo app.py realizamos la importacion del archivo configurado anteriormente config.py 
+![Captura de pantalla (129)](https://github.com/user-attachments/assets/ff04b9b8-2284-45b1-b1b1-83243b88e77f)
+Ahora debemos ir a la instancia en donde tenemos nuestra aplicación del objetivo 1 y nos podemos acceder al shell sql con el comando “mysql -h bookstoredb.c7hyjtnhxg7c.us-east-1.rds.amazonaws.com -u admin -p”.
+Es importante también levantar nuevamente el contenedor con los nuevos cambios del Docker-Compose.
+
+Vemos que después de crearse la base de datos podemos observar y todas las instancias que tengan la aplicación ejecutando se han conectado a ella de forma remota gracias a las configuración y modificaciones anteriores.
+
+![Captura de pantalla (130)](https://github.com/user-attachments/assets/0c8a68e1-c37a-4752-bfc5-399ec0d626b4)
+# 2. Creación de EFS.
+Ahora crearemos el sistema de archivos compartido NFS. Para esto nos dirigimos a Amazon EFS y creamos un nuevo EFS. En esta parte solo deberemos seleccionar un nombre y elegir la VPC default.
+Ahora deberemos copiar la identificación de este EFS creado la cual será necesaria para montarlo en la instancia donde tenemos nuestra app. 
+
+![Captura de pantalla (131)](https://github.com/user-attachments/assets/f56c4132-93fa-4aed-a6f7-a77798192f42)
+Ahora ejecutamos este comando en la instancia para montar el EFS creado, junto con la carpeta donde estarán los archivos compartidos por las diferentes instancias.
+
+sudo mount -t nfs4 -o nfsvers=4.1 fs-05215bfd3a2439b87.efs.us-east-1.amazonaws.com:/ /mnt/efs
+Podemos comprobar que el EFS quedó correctamente montado en la instancia a continuación:
+![Captura de pantalla (132)](https://github.com/user-attachments/assets/4763aeea-d3dd-4933-9e26-a8733c700ea4)
+Ahora es importante definir en nuestro Docker-Compose el volumen donde podrá subir sus archivos.
+
+![Captura de pantalla (133)](https://github.com/user-attachments/assets/029f67af-0c3c-4969-abcc-92d60c77f81b)
+
+Una vez que tenemos nuestra instancia con el Docker-compose de forma adecuada con su conexión a la base de datos y el sistema EFS montado, procedemos a crear la imagen AMI necesaria para los pasos posteriores.
+![Captura de pantalla (134)](https://github.com/user-attachments/assets/95eb7187-6a13-4d3d-948c-1fed07d15fba)
+
+# 3. Creación de imagen AMI
+Para la creación de la imagen AMI vamos a tomar la instancia base donde ya tenemos todo lo descrito anteriormente y vamos a crear Imagen, a continuación observamos la imagen creada.
+
+![Uploading Captura de pantalla (134).png…]()
+
+# 4. Creación de Launch Template
+
+Ahora vamos a crear Launch Template y creamos una nueva. Esta template podemos crearla usando un user-data o una imagen AMI como base, seleccionaremos la imagen AMI creada anteriormente la cual ya tiene una copia de todo aquello que tenemos en la instancia base que hemos configurado desde el inicio. Al crear la Launch template se selecciona la VPC default con los grupos de seguridad por defecto.
+
+Observamos la Launch Template creada y su configuración:
+![Captura de pantalla (135)](https://github.com/user-attachments/assets/9be86c92-fc10-4c27-b197-0cc6b304000e)
+
+# 5. Creación del ASG
+Nos dirigimos a ASG en amazon y creamos un Auto Scaling Group seleccionando la plantilla de lanzamiento creada en el paso anterior. En la configuración de redes y subredes, elegimos la VPC que hemos venido utilizando y seleccionamos al menos dos subredes públicas.
+ Debemos configurar los siguientes aspectos: 
+Tamaño del grupo
+Capacidad deseada: 2
+Mínimo: 2
+Máximo: 4.
+
+Esto mantendrá siempre al menos 2 instancias activas.
+
+Política de escalado
+Política de escalado basada en métricas.
+CPU utilization > 70% para escalar hacia arriba.
+
+Y tendríamos nuestro grupo creado
+![Captura de pantalla (136)](https://github.com/user-attachments/assets/c62e3d7c-6abd-48bf-b865-593cc1d3ed43)
+El siguiente paso es la creación del Load Balancer para distribuir la carga entre los diferentes instancias que se generen en el ASG.
+
+![Captura de pantalla (137)](https://github.com/user-attachments/assets/22eb74a8-d409-4f36-99fc-74edd5c4ee1e)
+# 6. Creación del ALB
+
+Vamos ALB en Amazon y creamos un Load Balancer, seleccionamos el tipo ALB y en esquema seleccionamos Internet-facing. Al igual que los demás componentes seleccionamos el VPC por default y seleccionamos al menos dos redes públicas. Tipo de IPv4 y establecemos el listener en el puerto 80 (HTTP).
+Es importante crear un target group que tendrá el conjunto de instancias (en este caso el ASG ya creado) entre las cuales el ALB balanceara las peticiones. Cuando el ASG crea nuevas instancias, el se encarga automáticamente de añadirlas a este target group del ALB.
+
+A continuación se ve el ALB creado y sus configuraciones.
+![Captura de pantalla (138)](https://github.com/user-attachments/assets/2e9bcce1-8258-49da-9ca1-fab1fbb67dcd)
+![Captura de pantalla (139)](https://github.com/user-attachments/assets/69644b5c-ddab-4861-9e9f-5bff1b6b4e7d)
+Ahora asociar el ALB con el ASG como se ve a continuación:
+
+En la sección de "Load balancing":
+Seleccionamos "Attach to an existing load balancer" y aquí elegimos nuestro ALB junto con el Target Group que hemos creado
+![Captura de pantalla (140)](https://github.com/user-attachments/assets/297df66f-77c6-450d-aca4-65153eab7fef)
+
+![Captura de pantalla (141)](https://github.com/user-attachments/assets/04f770e0-61a0-4783-9052-3a7dc707244a)
+
+De esta forma, cuando el ASG lance una nueva instancia, automáticamente se registrará en el Target Group y el ALB empezará a enrutar tráfico a esa instancia.
+
+# Algunas pruebas
+
+Vamos a acceder a la dirección ip del balanceador para ver si nos redirige a la aplicación.
+
+![Captura de pantalla (142)](https://github.com/user-attachments/assets/6ef839be-317e-473c-b655-80ee6cbd7338)
+En este momento se están ejecutando ambas instancias generadas por el ASG para mantener el estado deseado de acuerdo a lo que configuramos. Si la página aumenta demasiado su tráfico y número de peticiones, el ASG creará nuevas instancias hasta un máx de 4 para manejar y distribuir esta carga.
+Al tratarse de una aplicación bastante que no recibe muchas peticiones no es posible por el momento llevarla al extremo para lograr cambiarla.
+
+Ahora crearemos un libro para comprobar que se ejecuta adecuadamente la base de datos compartida gestionada por RDS.
+
+Accederemos desde una máquina y crearemos un libro.
+![Captura de pantalla (143)](https://github.com/user-attachments/assets/0ed9291e-fc17-4334-8ea0-d1668bb7043d)
+Accedemos desde otra máquina y vemos el libro creado:
+![Captura de pantalla (144)](https://github.com/user-attachments/assets/3362fc37-c7c3-4454-ad42-4a9a6e319586)
+Ahora, si tumbamos una de las instancias, vemos que el load balancer y el ASG no permiten que la app caiga y esta simplemente cambia de instancia y funciona normalmente.
+![Captura de pantalla (145)](https://github.com/user-attachments/assets/847e51a4-49bd-4e59-b00f-bd1d4e2184e3)
+Vemos desde consola los libros creados:
+![Captura de pantalla (146)](https://github.com/user-attachments/assets/9f805986-211c-44bc-b51d-cf30314082a5)
+
+Para finalizar observamos el grupo de seguridad y las reglas de entrada establecidas para el logro de este objetivo:
+![Captura de pantalla (147)](https://github.com/user-attachments/assets/11a1ee47-9985-4a88-b5f6-4760adc3c955)
+
+A modo de conclusión:
+En esta fase, logramos escalar horizontalmente nuestra aplicación monolítica Bookstore en AWS. Configuramos Amazon RDS como base de datos externa y Amazon EFS como almacenamiento compartido para archivos. Adaptamos la aplicación y docker-compose para funcionar con estos servicios externos.
+
+Creamos una AMI personalizada, un Launch Template y un Auto Scaling Group que mantiene múltiples instancias activas y escalables. Finalmente, integramos un Application Load Balancer (ALB) que distribuye el tráfico a las instancias del grupo, asegurando alta disponibilidad y tolerancia a fallos.
+
+
+# Configuración Objetivo 3 (Docker Swarm)
+Para el tercer objetivo teníamos como propósito utilizar Docker Swarm (o una herramienta similar) como orquestador de contenedores que nos permite el manejo y despliegue de contenedores a través de diferentes nodos, asegurando escalabilidad y alta disponibilidad. Además del uso de una base de datos externa, en este caso RDS de AWS con MySql y un balanceador de cargas para asegurar disponibilidad y detección de instancias/nodos caídos
+
+
+Lo primero es crear una Launch template y la configuración avanzada poner los siguientes comandos para instalar lo necesario para el correcto funcionamiento de la app:
+#!/bin/bash
+apt update -y
+apt install -y docker.io
+systemctl start docker
+systemctl enable docker
+apt install -y curl python3-pip
+pip3 install docker-compose
+docker-compose --version
+
+
+Luego, creamos 4 instancias a partir de esta nueva plantilla y esperamos que se inicialicen correctamente.
+Debemos asegurarnos de entrar a los securty groups y habilitar los siguientes puertos:
+
+![Captura de pantalla (148)](https://github.com/user-attachments/assets/17697e96-cb49-4a14-8164-9f61a4221c90)
+
+Ingresamos a la 4 máquinas virtuales y escogemos una que va a ser el líder.
+Este nodo líder efectuamos el comando para habilitar docker swarm: 
+sudo docker swarm init
+Luego de ejecutar este comando en la consola se mostrara un comando que deberemos copiar y pegar en las otras 3 máquinas para que se unan como managers al cluster (algo similar a esto):
+sudo docker swarm join --token <token> <IP_VM_1>:2377
+Si ejecutamos el siguiente comando deberíamos ver los 4 nodos:
+sudo docker node ls
+Luego creamos/configuramos la red Overlay en docker swarm con el siguiente comando (desde el nodo 1 o el líder)
+sudo docker network create --driver=overlay bookstore_net
+Luego creamos un archivo docker-compose.yml con la siguiente información o nos lo descargamos desde el repositorio https://github.com/TomasPinedaNaranjo/AplicacionEscalableTelematica.git en la rama llamada obj3
+![Captura de pantalla (149)](https://github.com/user-attachments/assets/5d8c0cf2-18cb-445e-a7b9-045f193143e6)
+(había otra manera de configurar las variables ENV, pero no se lo logró que funcionara, entonces tocó así)
+Luego desplegamos la aplicación usando Docker Stack con el siguiente comando:
+sudo docker stack deploy -c docker-compose.yml bookstore
+Podemos verificar el estado de los servicios y ver detalles de las réplicas con:
+sudo docker service ls
+	sudo docker service ps bookstore_flaskapp
+
+Además, en cada máquina podemos ver los nodos/replicas (que en total son 10) que se le han asignado a cada MV usando el comando:
+	
+sudo docker node ls
+
+Por último, AWS creamos un Load Balancer que escuche a las 4 máquinas virtuales creadas anteriormente en el puerto 5000 y accedemos al DNS name para ingresar a la página.
+
+Docker swarm se encargará de redistribuir las réplicas en caso de que alguna máquina virtual se caiga, además de también distribuir cargas por sí mismo (el load balancer es más que todo para no tener que acceder a la app por medio de las IPs públicas de las instancias y no tener que preocuparse por ver si alguna instancia esta caída)
+
 ## opcional - detalles de la organización del código por carpetas o descripción de algún archivo. (ESTRUCTURA DE DIRECTORIOS Y ARCHIVOS IMPORTANTE DEL PROYECTO, comando 'tree' de linux)
 
 ##
