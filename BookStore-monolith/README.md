@@ -460,10 +460,21 @@ Docker swarm se encargará de redistribuir las réplicas en caso de que alguna m
 
 ## opcional - detalles de la organización del código por carpetas o descripción de algún archivo. (ESTRUCTURA DE DIRECTORIOS Y ARCHIVOS IMPORTANTE DEL PROYECTO, comando 'tree' de linux)
 
-##
+# Lenguaje de programación
+
+La aplicación Bookstore está construida en el lenguaje Python y flask.
+
+Para instalar todo lo necesario corremos el comando:
+
+pip install requirements.txt
+
 # IP o nombres de dominio en nube o en la máquina servidor.
 
 # Dominio: elsapofeliz.website
+
+DNS del balanceador
+bookstore-alb-1905202200.us-east-1.elb.amazonaws.com
+LBObjective3-1661009539.us-east-1.elb.amazonaws.com
 
 ## sitio1-url
 
