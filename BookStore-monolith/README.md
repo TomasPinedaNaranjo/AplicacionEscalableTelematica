@@ -20,7 +20,9 @@
 
 # Aplicación Escalable Telematica - Proyecto 2
 
-#
+# Video explicatorio:
+
+https://www.youtube.com/watch?v=FzMCe6itx4w
 
 # 1. breve descripción de la actividad
 
