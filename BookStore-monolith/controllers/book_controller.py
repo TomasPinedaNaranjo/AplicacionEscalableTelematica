@@ -18,6 +18,7 @@ book = Blueprint('book', __name__)
 @book.route('/catalog')
 def catalog():
     print(socket.gethostname())
+    
     books = Book.query.all()
     return render_template('catalog.html', books=books)
 
