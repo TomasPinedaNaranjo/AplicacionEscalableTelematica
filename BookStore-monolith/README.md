@@ -473,12 +473,10 @@ pip install requirements.txt
 # Dominio: elsapofeliz.website
 
 DNS del balanceador
+
 bookstore-alb-1905202200.us-east-1.elb.amazonaws.com
+
 LBObjective3-1661009539.us-east-1.elb.amazonaws.com
-
-## sitio1-url
-
-## sitio2-url
 
 # referencias:
 
