@@ -45,6 +45,44 @@ Objetivo 3: Para el tercer objetivo teníamos como propósito utilizar Docker Sw
 
 ## 1.2. Que aspectos NO cumplió o desarrolló de la actividad propuesta por el profesor (requerimientos funcionales y no funcionales)
 
+# Objetivos cumplidos:
+RF1.1: La aplicación BookStore debe ser desplegada correctamente en una instancia EC2 de AWS usando Docker.
+
+RF1.2: El sistema debe estar accesible desde un dominio personalizado configurado correctamente.
+
+RF1.3: NGINX debe actuar como proxy inverso y gestionar las conexiones HTTPS mediante un certificado SSL válido.
+
+RF2.1: El sistema debe escalar automáticamente mediante un grupo de autoescalamiento de EC2 al detectar carga alta.
+
+RF2.2: La base de datos debe estar separada del backend de la aplicación y debe ser gestionada mediante un servicio administrado (por ejemplo, Amazon RDS) o configurada con alta disponibilidad.
+
+# No cumplidos:
+Dado a que se transformó la idea inicial del objetivo 3 del proyecto no logramos realizar estos requisitos puntuales ya que se transformó por una implementación de Docker Swarm.
+
+RF2.3: Los servidores deben tener acceso a archivos compartidos a través de un sistema de archivos NFS disponible y tolerante a fallos.
+
+RF3.1: El microservicio de Autenticación debe permitir a los usuarios registrarse, iniciar sesión y cerrar sesión.
+
+RF3.2: El microservicio de Catálogo debe permitir la consulta de los libros disponibles en la plataforma.
+
+RF3.3: El microservicio de Compra debe permitir realizar el proceso completo de compra, incluyendo pago y confirmación de entrega.
+
+Requisitos funcionales cumplidos:
+
+RNF: El sistema debe permitir el escalamiento horizontal automático.
+
+RNF: La plataforma debe mantener un tiempo de disponibilidad.
+
+RF: Debe haber distribución de tráfico. 
+
+Requisitos No funcionales cumplidos:
+
+Estos requisitos relacionados con el objetivo 3 no se lograron ya que este objetivo se transformó.
+
+RNF: Baja latencia entre la comunicación entre microservicios.
+
+RNF: Escalabilidad individual entre cada microservicio.
+
 # 2. información general de diseño de alto nivel, arquitectura, patrones, mejores prácticas utilizadas.
 Objetivo 1:
 
