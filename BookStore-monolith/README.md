@@ -94,8 +94,7 @@ Objetivo 1:
 
 
 Objetivo 2:
-
-<img width="877" alt="Captura de pantalla 2025-05-13 a la(s) 7 37 50 p m" src="https://github.com/user-attachments/assets/b38a8b02-618d-4391-adc6-067ec300262f" />
+<img width="877" alt="Captura de pantalla 2025-05-13 a la(s) 7 37 50 p m" src="https://github.com/user-attachments/assets/46deaa06-d19a-4296-b55c-c3274d91ee95" />
 
 Objetivo 3:
 
@@ -240,6 +239,9 @@ Un Load Balancer (ELB).
 Base de datos administrada (RDS) o replicada con HA.
 Un sistema de archivos NFS compartido (por ejemplo, EFS en AWS o tu propio NFS en una VM con HA).
 El dominio y SSL del objetivo 1 deben seguir funcionando.
+
+![Screenshot 2025-05-14 191238](https://github.com/user-attachments/assets/46deaa06-d19a-4296-b55c-c3274d91ee95)
+
 
 Para esto, el objetivo es ejecutar 2 o más VMs con la app y Docker-Compose. Además, la creación de un Auto Scaling Group para que las instancias se creen o se eliminen automáticamente. Necesitaremos un Load Balancer encargado de distribuir el tráfico, una base de datos Amazon RDS con MySQL. Además, aunque no existen archivos en la aplicación, la implementación de un sistema de archivos compartido NFS.
 
